@@ -53,31 +53,30 @@ const FileUpload = ({ onDataReceived }) => {
 
   const processFiles = async () => {
     if (!validateFiles()) return;
-
+    
     setUploading(true);
     setError(null);
-
+    
     const formData = new FormData();
-    formData.append('files', files.pdf, 'document.pdf');
-    formData.append('files', files.xlsx, 'document.xlsx');
-
+    formData.append('files', files.pdf);
+    formData.append('files', files.xlsx);
+    
     try {
       const response = await fetch(`${API_BASE_URL}/test-upload/`, {
         method: 'POST',
+        mode: 'cors',
         headers: {
-          'Accept': 'application/json',
+          'Accept': 'application/json'
         },
-        body: formData,
+        body: formData
       });
-
+      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Erro ${response.status}: ${response.statusText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-
+      
       const result = await response.json();
-      console.log('Upload result:', result);
-
+      
       if (result.data) {
         onDataReceived(result.data);
         setFiles({ pdf: null, xlsx: null });
@@ -140,6 +139,9 @@ const FileUpload = ({ onDataReceived }) => {
             />
             <div className="flex flex-col items-center gap-2">
               {getUploadStatus()}
+              {!uploading && (
+                <p>Arraste e solte os arquivos aqui ou clique para selecionar.</p>
+              )}
             </div>
           </div>
 

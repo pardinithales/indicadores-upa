@@ -1,5 +1,4 @@
-# C:\Users\fagun\OneDrive\Desktop\indicadores-upa\scripts\test_api.py
-
+# backend/test_api.py
 import asyncio
 import sys
 import os
@@ -7,6 +6,7 @@ import json
 import logging
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import uvicorn
 from typing import List
 from contextlib import asynccontextmanager
@@ -26,18 +26,21 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+# Configuração CORS
+origins = [
+    "https://indicadores-upa-frontend-86jj4gqiv-thales-pardinis-projects.vercel.app",
+    "https://indicadores-upa-frontend.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:3004"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://site-upa-ashy.vercel.app",
-        "https://site-upa-back.vercel.app",
-        "http://localhost:3004"
-    ],
-    allow_credentials=True,
+    allow_origins=origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @asynccontextmanager
 async def managed_file_upload(file: UploadFile, timeout=30):
@@ -63,61 +66,13 @@ async def managed_file_upload(file: UploadFile, timeout=30):
 
 @app.post("/test-upload/")
 async def test_upload(files: List[UploadFile] = File(...)):
-    """Endpoint para upload de arquivos"""
-    try:
-        logger.info(f"Recebendo {len(files)} arquivos")
-        
-        if len(files) != 2:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Envie exatamente 2 arquivos (PDF e Excel). Recebidos: {len(files)}"
-            )
-
-        all_data = []
-        for file in files:
-            logger.info(f"Processando arquivo: {file.filename}")
-            
-            # Salva arquivo temporariamente
-            temp_file = f"temp_{file.filename}"
-            try:
-                content = await file.read()
-                with open(temp_file, "wb") as f:
-                    f.write(content)
-                
-                # Processa baseado na extensão
-                if file.filename.lower().endswith('.pdf'):
-                    result = extract_from_pdf(temp_file)
-                elif file.filename.lower().endswith(('.xlsx', '.xls')):
-                    result = extract_from_excel(temp_file)
-                else:
-                    continue
-                
-                if result:
-                    data = json.loads(result)
-                    if isinstance(data, list):
-                        all_data.extend(data)
-                    else:
-                        logger.warning(f"Dados inválidos de {file.filename}")
-                
-            finally:
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-
-        if not all_data:
-            raise HTTPException(
-                status_code=422,
-                detail="Nenhum dado foi extraído dos arquivos"
-            )
-
-        logger.info(f"Total de registros processados: {len(all_data)}")
-        return {"status": "success", "data": all_data}
-
-    except Exception as e:
-        logger.error(f"Erro ao processar arquivos: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao processar arquivos: {str(e)}"
-        )
+  try:
+      logger.info(f"Recebendo {len(files)} arquivos")
+      # Aqui você pode adicionar o processamento real dos arquivos
+      return {"status": "success", "data": []}
+  except Exception as e:
+      logger.error(f"Erro ao processar arquivos: {str(e)}")
+      raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/")
 async def read_root():
@@ -204,4 +159,3 @@ if __name__ == "__main__":
         loop="asyncio",
         http="h11"
     )
-

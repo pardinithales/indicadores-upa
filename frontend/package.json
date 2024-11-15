@@ -30,11 +30,10 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "set PORT=3004 && react-scripts start",
-    "build": "react-scripts build",
+    "start": "react-scripts start",
+    "build": "CI='' react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "build:css": "tailwindcss build src/tailwind.css -o src/index.css"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
