@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+**/node_modules/
+**/.cache/
+.vscode/
+
+# Build
+/build/
+/dist/
+
+# Cache
+*.pack
+*.pack.old
+*.log
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+
+# Temp files
+*.txt
+test_data.xlsx
+
+# Keep empty folders
+/uploads/*
+/outputs/*
+/backend/inputs/*
+!uploads/.gitkeep
+!outputs/.gitkeep
+!backend/inputs/.gitkeep

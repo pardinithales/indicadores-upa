@@ -1,0 +1,19 @@
+{
+  "files": {
+    "main.css": "/static/css/main.96b6d62a.css",
+    "main.js": "/static/js/main.ee6b639e.js",
+    "static/js/213.944f7c15.chunk.js": "/static/js/213.944f7c15.chunk.js",
+    "static/js/732.27303cc5.chunk.js": "/static/js/732.27303cc5.chunk.js",
+    "static/media/logo2-cabecalho_final.png": "/static/media/logo2-cabecalho_final.43b0e3342901a980be3d.png",
+    "static/media/cabecalho-final_logo.png": "/static/media/cabecalho-final_logo.ac5bfc1cf173ab89f693.png",
+    "index.html": "/index.html",
+    "main.96b6d62a.css.map": "/static/css/main.96b6d62a.css.map",
+    "main.ee6b639e.js.map": "/static/js/main.ee6b639e.js.map",
+    "213.944f7c15.chunk.js.map": "/static/js/213.944f7c15.chunk.js.map",
+    "732.27303cc5.chunk.js.map": "/static/js/732.27303cc5.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.96b6d62a.css",
+    "static/js/main.ee6b639e.js"
+  ]
+}

@@ -1,0 +1,21 @@
+/* src/components/Report.css */
+
+/* Classe para esconder elementos durante a exportação */
+.hide-on-print {
+    display: none;
+  }
+  
+  /* Adicionar padding ao contêiner principal para evitar que o conteúdo fique muito próximo das bordas */
+  .report {
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  
+  /* Garantir que as imagens do cabeçalho sejam responsivas */
+  .header-image {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Estilos adicionais para tabelas, textos e gráficos podem ser adicionados conforme necessário */
+  

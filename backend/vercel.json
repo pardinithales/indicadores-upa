@@ -1,0 +1,15 @@
+{
+    "version": 2,
+    "builds": [
+      { "src": "test_api.py", "use": "@vercel/python" }
+    ],
+    "routes": [
+      { "src": "/test-upload", "dest": "test_api.py" },
+      { "src": "/test-upload/(.*)", "dest": "test_api.py" },
+      { "src": "/(.*)", "dest": "test_api.py" }
+    ],
+    "env": {
+      "PYTHONPATH": "."
+    }
+  }
+  
