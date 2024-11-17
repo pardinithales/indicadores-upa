@@ -3,5 +3,8 @@
     "@jridgewell/sourcemap-codec": "latest",
     "@rollup/plugin-terser": "latest",
     "rimraf": "^5.0.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   }
 }
