@@ -5,14 +5,15 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "build"
+        "distDir": "build",
+        "buildCommand": "npm install && npm run build"
       }
     }
   ],
   "routes": [
     {
-      "src": "/manifest.json",
-      "dest": "/manifest.json",
+      "src": "/(.*)",
+      "dest": "/index.html",
       "headers": {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET",
