@@ -1,5 +1,7 @@
 {
-  "devDependencies": {
-    "@rollup/plugin-terser": "^0.4.4"
+  "dependencies": {
+    "@jridgewell/sourcemap-codec": "latest",
+    "@rollup/plugin-terser": "latest",
+    "rimraf": "^5.0.0"
   }
 }
