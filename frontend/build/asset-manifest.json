@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/static/css/main.c995ef62.css",
+    "main.js": "/static/js/main.a004f3b5.js",
+    "static/js/760.0b1f2e2c.chunk.js": "/static/js/760.0b1f2e2c.chunk.js",
+    "static/js/265.70aa3fa8.chunk.js": "/static/js/265.70aa3fa8.chunk.js",
+    "static/media/logo2-cabecalho_final.png": "/static/media/logo2-cabecalho_final.43b0e3342901a980be3d.png",
+    "static/media/cabecalho-final_logo.png": "/static/media/cabecalho-final_logo.ac5bfc1cf173ab89f693.png",
+    "index.html": "/index.html"
+  },
+  "entrypoints": [
+    "static/css/main.c995ef62.css",
+    "static/js/main.a004f3b5.js"
+  ]
+}
