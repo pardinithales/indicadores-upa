@@ -33,7 +33,8 @@ origins = [
     "http://localhost:3001",  # Local IP access
     "https://indicadores-upa-frontend-thales-pardinis-projects.vercel.app",  # Production frontend
     "https://indicadores-upa-frontend-2ikhw6iuj-thales-pardinis-projects.vercel.app",  # Alternate production frontend
-    "https://indicadores-upa-frontend-1l4y3uzj9-thales-pardinis-projects.vercel.app"  # Alternate production frontend
+    "https://indicadores-upa-frontend-1l4y3uzj9-thales-pardinis-projects.vercel.app",  # Alternate production frontend
+    "https://indicadores-upa-frontend-cmmrep9h0-thales-pardinis-projects.vercel.app"  # Alternate production frontend
 ]
 
 app.add_middleware(
