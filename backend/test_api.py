@@ -13,6 +13,7 @@ from datetime import datetime
 import pandas as pd
 from PyPDF2 import PdfReader
 import re
+import tempfile
 
 # Configuração do loop de eventos no Windows
 if sys.platform.startswith('win'):
@@ -123,17 +124,34 @@ async def managed_file_upload(file: UploadFile, timeout=30):
 @app.post("/test-upload/")
 async def test_upload(files: List[UploadFile] = File(...)):
     results = []
-    for file in files:
-        async with managed_file_upload(file) as temp_file:
+    try:
+        # Diretório temporário
+        temp_dir = "/tmp" if os.path.exists("/tmp") else tempfile.gettempdir()
+
+        for file in files:
+            temp_file_path = os.path.join(temp_dir, file.filename)
+            with open(temp_file_path, "wb") as temp_file:
+                temp_file.write(await file.read())
+
+            # Processa o arquivo dependendo do tipo
             if file.filename.endswith(".pdf"):
-                pdf_data = extract_from_pdf(temp_file)
+                pdf_data = extract_from_pdf(temp_file_path)
                 if pdf_data:
                     results.append({"filename": file.filename, "type": "pdf", "data": json.loads(pdf_data)})
             elif file.filename.endswith((".xlsx", ".xls")):
-                excel_data = extract_from_excel(temp_file)
+                excel_data = extract_from_excel(temp_file_path)
                 if excel_data:
                     results.append({"filename": file.filename, "type": "excel", "data": json.loads(excel_data)})
-    return {"status": "success", "data": results}
+
+            # Remova o arquivo temporário após o processamento
+            os.remove(temp_file_path)
+
+        return {"status": "success", "data": results}
+    except Exception as e:
+        logger.error(f"Erro ao processar arquivos: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao processar arquivos: {str(e)}")
+
+
 
 @app.get("/")
 async def read_root():
