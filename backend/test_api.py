@@ -1,4 +1,3 @@
-# backend/test_api.py
 import asyncio
 import sys
 import os
@@ -12,16 +11,15 @@ from typing import List
 from contextlib import asynccontextmanager
 from datetime import datetime
 import pandas as pd
+from PyPDF2 import PdfReader
+import re
 
-# Importa as funções de extração
-from extract_data_both import extract_from_pdf, extract_from_excel
-
-# Configure o loop de eventos no Windows
+# Configuração do loop de eventos no Windows
 if sys.platform.startswith('win'):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # Configuração do logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
@@ -40,6 +38,69 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Funções auxiliares para validação e extração de dados
+def validate_date(date_str):
+    """Valida e padroniza formato de data"""
+    if not date_str or date_str == "NÃO INFORMADO" or date_str == "EM ATENDIMENTO":
+        return "EM ATENDIMENTO"
+    try:
+        date_obj = datetime.strptime(date_str, '%d/%m/%Y')
+        return date_obj.strftime('%d/%m/%Y')
+    except ValueError:
+        return "EM ATENDIMENTO"
+
+def validate_and_clean_data(data_dict):
+    """Valida e limpa os dados antes de retornar"""
+    required_fields = ['Nome', 'Data_Entrada', 'Data_Saida', 'Hospital', 'Status', 'Setor']
+    for field in required_fields:
+        if field not in data_dict:
+            data_dict[field] = 'NÃO INFORMADO'
+    return data_dict
+
+def extract_from_pdf(file_path):
+    """Extrai dados do arquivo PDF"""
+    try:
+        with open(file_path, 'rb') as file:
+            reader = PdfReader(file)
+            text = ""
+            for page in reader.pages:
+                text += page.extract_text()
+            records = re.split(r'(?=(?:R E M|C T I|S P)\s+)', text)
+            data = []
+            for record in records:
+                if not record.strip():
+                    continue
+                tipo_match = re.match(r'(R E M|C T I|S P)\s+', record)
+                if not tipo_match:
+                    continue
+                tipo = tipo_match.group(1)
+                rest = record[len(tipo_match.group(0)):]
+                nome_match = re.search(r'([A-ZÀ-Ú\s\']+?)\s+(PS|BOX|ISOL|em casa)', rest)
+                nome = nome_match.group(1).strip() if nome_match else "NÃO INFORMADO"
+                data.append(validate_and_clean_data({"Nome": nome, "Tipo": tipo.strip()}))
+            return json.dumps(data, ensure_ascii=False)
+    except Exception as e:
+        logger.error(f"Erro ao processar PDF: {e}")
+        return None
+
+def extract_from_excel(file_path):
+    """Extrai dados do arquivo Excel"""
+    try:
+        df = pd.read_excel(file_path)
+        column_mapping = {
+            'Nome': 'Nome',
+            'Data Entrada': 'Data_Entrada',
+            'Data Saída': 'Data_Saida',
+            'Destino': 'Hospital',
+            'Fim': 'Status',
+            'Clinica': 'Setor'
+        }
+        df = df.rename(columns=column_mapping)
+        return df.to_json(orient='records', force_ascii=False)
+    except Exception as e:
+        logger.error(f"Erro ao processar Excel: {e}")
+        return None
+
 @asynccontextmanager
 async def managed_file_upload(file: UploadFile, timeout=30):
     """Gerencia o ciclo de vida do arquivo temporário com timeout"""
@@ -53,26 +114,26 @@ async def managed_file_upload(file: UploadFile, timeout=30):
         logger.error(f"Timeout ao processar arquivo {file.filename}")
         raise HTTPException(status_code=408, detail="Timeout ao processar arquivo")
     except Exception as e:
-        logger.error(f"Erro ao processar arquivo {file.filename}: {str(e)}")
+        logger.error(f"Erro ao processar arquivo {file.filename}: {e}")
         raise HTTPException(status_code=500, detail="Erro ao processar arquivo")
     finally:
         if os.path.exists(temp_file):
-            try:
-                os.remove(temp_file)
-            except Exception as e:
-                logger.error(f"Erro ao remover arquivo temporário {temp_file}: {e}")
+            os.remove(temp_file)
 
 @app.post("/test-upload/")
 async def test_upload(files: List[UploadFile] = File(...)):
-    try:
-        logger.info(f"Recebendo {len(files)} arquivos")
-        for file in files:
-            logger.info(f"Arquivo recebido: {file.filename}")
-        return {"status": "success", "data": [file.filename for file in files]}
-    except Exception as e:
-        logger.error(f"Erro ao processar arquivos: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+    results = []
+    for file in files:
+        async with managed_file_upload(file) as temp_file:
+            if file.filename.endswith(".pdf"):
+                pdf_data = extract_from_pdf(temp_file)
+                if pdf_data:
+                    results.append({"filename": file.filename, "type": "pdf", "data": json.loads(pdf_data)})
+            elif file.filename.endswith((".xlsx", ".xls")):
+                excel_data = extract_from_excel(temp_file)
+                if excel_data:
+                    results.append({"filename": file.filename, "type": "excel", "data": json.loads(excel_data)})
+    return {"status": "success", "data": results}
 
 @app.get("/")
 async def read_root():
@@ -83,79 +144,27 @@ async def startup_event():
     """Processa os arquivos iniciais na pasta inputs quando o servidor inicia"""
     logger.info("Iniciando processamento inicial dos arquivos")
     input_dir = os.path.join(os.path.dirname(__file__), '..', 'inputs')
-    
+    output_dir = os.path.join(os.path.dirname(__file__), '..', 'outputs')
+
     if not os.path.exists(input_dir):
         logger.error(f"Diretório de inputs não encontrado: {input_dir}")
         return
-    
+
     all_data = []
-    pdf_files = []
-    excel_files = []
-    
-    # Separa arquivos por tipo
     for filename in os.listdir(input_dir):
         file_path = os.path.join(input_dir, filename)
-        if filename.lower().endswith('.pdf'):
-            pdf_files.append(file_path)
-        elif filename.lower().endswith(('.xlsx', '.xls')):
-            excel_files.append(file_path)
-    
-    # Processa PDFs
-    for pdf_path in pdf_files:
-        logger.info(f"Testando PDF: {pdf_path}")
-        result = extract_from_pdf(pdf_path)
-        if result:
-            data = json.loads(result)
-            if isinstance(data, list):
-                all_data.extend(data)
-    
-    # Processa Excel
-    for excel_path in excel_files:
-        logger.info(f"Testando Excel: {excel_path}")
-        result = extract_from_excel(excel_path)
-        if result:
-            data = json.loads(result)
-            if isinstance(data, list):
-                all_data.extend(data)
-    
-    # Salva resultado mesclado
-    if all_data:
-        output_dir = os.path.join(os.path.dirname(__file__), '..', 'outputs')
-        os.makedirs(output_dir, exist_ok=True)
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = os.path.join(output_dir, f'merged_data_{timestamp}.json')
-        
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(all_data, f, ensure_ascii=False, indent=2)
-        
-        logger.info(f"Dados mesclados salvos em: {output_file}")
-        logger.info(f"Total de registros processados: {len(all_data)}")
-        
-        # Gera estatísticas básicas
-        df = pd.DataFrame(all_data)
-        stats_file = os.path.join(output_dir, f'merged_stats_{timestamp}.txt')
-        
-        with open(stats_file, 'w', encoding='utf-8') as f:
-            f.write("ESTATÍSTICAS DOS DADOS MESCLADOS\n")
-            f.write("=" * 50 + "\n\n")
-            
-            f.write("1. DISTRIBUIÇÃO POR STATUS\n")
-            f.write(df['Status'].value_counts().to_string() + "\n\n")
-            
-            f.write("2. DISTRIBUIÇÃO POR SETOR\n")
-            f.write(df['Setor'].value_counts().to_string() + "\n\n")
-            
-            f.write("3. DISTRIBUIÇÃO POR HOSPITAL\n")
-            f.write(df['Hospital'].value_counts().to_string() + "\n")
-        
-        logger.info(f"Estatísticas salvas em: {stats_file}")
+        if filename.endswith(".pdf"):
+            pdf_result = extract_from_pdf(file_path)
+            if pdf_result:
+                all_data.extend(json.loads(pdf_result))
+        elif filename.endswith((".xlsx", ".xls")):
+            excel_result = extract_from_excel(file_path)
+            if excel_result:
+                all_data.extend(json.loads(excel_result))
 
-if __name__ == "__main__":
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=8001,
-        loop="asyncio",
-        http="h11"
-    )
+    if all_data:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_file = os.path.join(output_dir, f"merged_data_{timestamp}.json")
+        os.makedirs(output_dir, exist_ok=True)
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(all_data, f, ensure_ascii=False, indent=2)
