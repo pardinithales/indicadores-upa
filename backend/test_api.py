@@ -25,12 +25,9 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# Configuração CORS
 origins = [
-    "http://localhost:3000",  # Desenvolvimento local
-    "http://127.0.0.1:3000",  # IP local
-    "https://indicadores-upa-frontend.vercel.app",  # Produção do frontend no Vercel
-    "https://indicadores-upa-back.vercel.app"  # Para evitar bloqueios cruzados
+    "http://localhost:3000",  # Para desenvolvimento local
+    "https://indicadores-upa-frontend.vercel.app",  # URL de produção do frontend
 ]
 
 app.add_middleware(
@@ -125,19 +122,19 @@ async def managed_file_upload(file: UploadFile, timeout=30):
 
 @app.post("/test-upload/")
 async def test_upload(files: List[UploadFile] = File(...)):
-    logger.info("Requisição recebida em /test-upload/")
-    logger.info(f"Origem: {dict(app.state.router.url_path_for('test-upload'))}")
-    logger.info(f"Arquivos recebidos: {[file.filename for file in files]}")
+    logger.info(f"Rota ativa: /test-upload/")
     results = []
     try:
-        # Diretório temporário
-        temp_dir = "/tmp" if os.path.exists("/tmp") else tempfile.gettempdir()
-
+        # Diretório temporário garantido
+        temp_dir = "/tmp"
         for file in files:
             temp_file_path = os.path.join(temp_dir, file.filename)
+            logger.info(f"Salvando arquivo temporário: {temp_file_path}")
+            
+            # Salva o arquivo no diretório permitido
             with open(temp_file_path, "wb") as temp_file:
                 temp_file.write(await file.read())
-
+            
             # Processa o arquivo dependendo do tipo
             if file.filename.endswith(".pdf"):
                 pdf_data = extract_from_pdf(temp_file_path)
@@ -148,13 +145,14 @@ async def test_upload(files: List[UploadFile] = File(...)):
                 if excel_data:
                     results.append({"filename": file.filename, "type": "excel", "data": json.loads(excel_data)})
 
-            # Remova o arquivo temporário após o processamento
+            # Remove o arquivo temporário
             os.remove(temp_file_path)
 
         return {"status": "success", "data": results}
     except Exception as e:
-        logger.error(f"Erro ao processar arquivos: {e}")
+        logger.error(f"Erro ao processar arquivos: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Erro ao processar arquivos: {str(e)}")
+
 
 
 
