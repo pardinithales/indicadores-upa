@@ -28,16 +28,14 @@ app = FastAPI()
 
 # Configuração CORS
 origins = [
-    "https://indicadores-upa-frontend-86jj4gqiv-thales-pardinis-projects.vercel.app",
-    "https://indicadores-upa-frontend.vercel.app",
-    "http://localhost:3000",
-    "http://localhost:3004"
+    "https://indicadores-upa-frontend-ewjltshuw-thales-pardinis-projects.vercel.app",
+    "http://localhost:3000",  # Para desenvolvimento local
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -66,13 +64,15 @@ async def managed_file_upload(file: UploadFile, timeout=30):
 
 @app.post("/test-upload/")
 async def test_upload(files: List[UploadFile] = File(...)):
-  try:
-      logger.info(f"Recebendo {len(files)} arquivos")
-      # Aqui você pode adicionar o processamento real dos arquivos
-      return {"status": "success", "data": []}
-  except Exception as e:
-      logger.error(f"Erro ao processar arquivos: {str(e)}")
-      raise HTTPException(status_code=500, detail=str(e))
+    try:
+        logger.info(f"Recebendo {len(files)} arquivos")
+        for file in files:
+            logger.info(f"Arquivo recebido: {file.filename}")
+        return {"status": "success", "data": [file.filename for file in files]}
+    except Exception as e:
+        logger.error(f"Erro ao processar arquivos: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/")
 async def read_root():
