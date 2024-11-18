@@ -27,9 +27,10 @@ app = FastAPI()
 
 # Configuração CORS
 origins = [
-    "http://localhost:3000",  # Permitir localhost para desenvolvimento
-    "http://127.0.0.1:3000",  # Caso o React use localhost com IP
-    "https://indicadores-upa-frontend.vercel.app",  # URL de produção do frontend
+    "http://localhost:3000",  # Desenvolvimento local
+    "http://127.0.0.1:3000",  # IP local
+    "https://indicadores-upa-frontend.vercel.app",  # Produção do frontend no Vercel
+    "https://indicadores-upa-back.vercel.app"  # Para evitar bloqueios cruzados
 ]
 
 app.add_middleware(
@@ -124,6 +125,9 @@ async def managed_file_upload(file: UploadFile, timeout=30):
 
 @app.post("/test-upload/")
 async def test_upload(files: List[UploadFile] = File(...)):
+    logger.info("Requisição recebida em /test-upload/")
+    logger.info(f"Origem: {dict(app.state.router.url_path_for('test-upload'))}")
+    logger.info(f"Arquivos recebidos: {[file.filename for file in files]}")
     results = []
     try:
         # Diretório temporário

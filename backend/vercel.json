@@ -5,14 +5,9 @@
   ],
   "routes": [
     { "src": "/test-upload", "dest": "test_api.py" },
+    { "src": "/test-upload/(.*)", "dest": "test_api.py" },
     { "src": "/(.*)", "dest": "test_api.py" }
   ],
-  "projectSettings": {
-    "framework": null,
-    "buildCommand": null,
-    "outputDirectory": null,
-    "devCommand": null
-  },
   "env": {
     "PYTHONPATH": "."
   }
