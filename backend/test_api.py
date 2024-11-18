@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 origins = [
+    "https://indicadores-upa-frontend-ewjltshuw-thales-pardinis-projects.vercel.app",
     "http://localhost:3000",  # Para desenvolvimento local
-    "https://indicadores-upa-frontend.vercel.app",  # URL de produção do frontend
 ]
 
 app.add_middleware(
