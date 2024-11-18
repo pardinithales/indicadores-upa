@@ -27,8 +27,9 @@ app = FastAPI()
 
 # Configuração CORS
 origins = [
-    "https://indicadores-upa-frontend-ewjltshuw-thales-pardinis-projects.vercel.app",
-    "http://localhost:3000",  # Para desenvolvimento local
+    "http://localhost:3000",  # Permitir localhost para desenvolvimento
+    "http://127.0.0.1:3000",  # Caso o React use localhost com IP
+    "https://indicadores-upa-frontend.vercel.app",  # URL de produção do frontend
 ]
 
 app.add_middleware(
