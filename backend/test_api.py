@@ -25,17 +25,21 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+from fastapi.middleware.cors import CORSMiddleware
+
 origins = [
-    "https://indicadores-upa-frontend-ewjltshuw-thales-pardinis-projects.vercel.app",
-    "http://localhost:3000",  # Para desenvolvimento local
+    "http://localhost:3000",  # Local development
+    "http://127.0.0.1:3000",  # Local IP access
+    "https://indicadores-upa-frontend-thales-pardinis-projects.vercel.app",  # Production frontend
+    "https://indicadores-upa-frontend-2ikhw6iuj-thales-pardinis-projects.vercel.app"  # Alternate production frontend
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=origins,  # Explicitly allow these origins
+    allow_credentials=True,  # Enable cookies and Authorization headers
+    allow_methods=["GET", "POST", "OPTIONS"],  # HTTP methods to allow
+    allow_headers=["Origin", "Content-Type", "Accept", "Authorization"],  # Allowed headers
 )
 
 # Funções auxiliares para validação e extração de dados
