@@ -1,88 +1,45 @@
-// src/App.jsx
-
-import React, { useState } from 'react';
-import DashboardLayout from './components/DashboardLayout';
-import FileUpload from './components/FileUpload';
-import DateSelector from './components/DateSelector';
+import React, { useState, useEffect } from 'react';
 import DataDisplay from './components/DataDisplay';
-import ReportDisplay from './components/ReportDisplay';
-import WelcomePage from './components/WelcomePage';
-import MetadataForm from './components/MetadataForm';
-import Report from './components/Report';
+import DateSelector from './components/DateSelector';
 
-function App() {
-  const [uploadedData, setUploadedData] = useState([]);
-  const [selectedPeriod, setSelectedPeriod] = useState({
+const App = () => {
+  const [data, setData] = useState([]);
+  const [period, setPeriod] = useState({
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
   });
-  const [activeTab, setActiveTab] = useState('dashboard');
 
-  const [metadata, setMetadata] = useState(null);
-
-  const handleDataReceived = (data) => {
-    setUploadedData(data);
-    setMetadata(null); // Resetar metadados ao receber novos dados
-  };
-
-  const handlePeriodChange = (period) => {
-    setSelectedPeriod(period);
-  };
-
-  const handleMetadataSubmit = (metadata) => {
-    setMetadata(metadata);
-  };
+  useEffect(() => {
+    fetch("https://indicadores-upa-back.vercel.app/test-upload/", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((responseData) => {
+        const fileData = responseData?.data[0]?.data; // Assuming data is nested in data[0].data
+        if (fileData) {
+          setData(fileData);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
+  }, []);
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6 p-6">
-        {uploadedData.length === 0 ? (
-          <>
-            <WelcomePage />
-            <FileUpload onDataReceived={handleDataReceived} />
-          </>
-        ) : (
-          <>
-            <FileUpload onDataReceived={handleDataReceived} />
-            <DateSelector onPeriodChange={handlePeriodChange} />
-
-            <div className="flex space-x-2 mb-4">
-              <button
-                className={`px-4 py-2 rounded ${
-                  activeTab === 'dashboard' ? 'bg-primary text-white' : 'bg-gray-200'
-                }`}
-                onClick={() => setActiveTab('dashboard')}
-              >
-                Dashboard
-              </button>
-              <button
-                className={`px-4 py-2 rounded ${
-                  activeTab === 'report' ? 'bg-primary text-white' : 'bg-gray-200'
-                }`}
-                onClick={() => setActiveTab('report')}
-              >
-                Relatório
-              </button>
-            </div>
-
-            {activeTab === 'dashboard' && (
-              <DataDisplay data={uploadedData} period={selectedPeriod} />
-            )}
-
-            {activeTab === 'report' && (
-              <>
-                {!metadata ? (
-                  <MetadataForm onSubmit={handleMetadataSubmit} />
-                ) : (
-                  <Report data={uploadedData} metadata={metadata} />
-                )}
-              </>
-            )}
-          </>
-        )}
-      </div>
-    </DashboardLayout>
+    <div>
+      <DateSelector onPeriodChange={setPeriod} />
+      <DataDisplay data={data} period={period} />
+    </div>
   );
-}
+};
 
 export default App;

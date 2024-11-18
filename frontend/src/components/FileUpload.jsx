@@ -64,19 +64,19 @@ const FileUpload = ({ onDataReceived }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/test-upload/`, {
         method: 'POST',
-        mode: 'cors',
+        mode: 'cors', // Isso é necessário para habilitar CORS
         headers: {
-          'Accept': 'application/json'
+          'Accept': 'application/json', // Opcional, mas recomendado
         },
-        body: formData
+        body: formData,
       });
-      
+  
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+  
       const result = await response.json();
-      
+  
       if (result.data) {
         onDataReceived(result.data);
         setFiles({ pdf: null, xlsx: null });

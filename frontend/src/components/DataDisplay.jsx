@@ -6,34 +6,25 @@ import _ from 'lodash';
 const DataDisplay = ({ data, period }) => {
   if (!data || data.length === 0) return null;
 
-  // Função auxiliar para validar e converter datas
-  const parseDate = (dateStr) => {
-    if (!dateStr || dateStr === 'EM ATENDIMENTO') return null;
-    try {
-      const [day, month, year] = dateStr.split('/').map(Number);
-      return new Date(year, month - 1, day);
-    } catch {
-      return null;
-    }
+  // Function to parse timestamp to readable date
+  const parseDate = (timestamp) => {
+    if (!timestamp) return "N/A";
+    return new Date(timestamp).toLocaleDateString("pt-BR");
   };
 
-  // Filtra os dados pelo período selecionado com validação melhorada
-  const filteredData = data.filter(item => {
+  // Filter data by selected period
+  const filteredData = data.filter((item) => {
     if (!item?.Data_Entrada) return false;
-    const entryDate = parseDate(item.Data_Entrada);
-    if (!entryDate) return false;
-    
+    const entryDate = new Date(item.Data_Entrada);
     return (
       entryDate.getMonth() + 1 === period.month &&
       entryDate.getFullYear() === period.year
     );
   });
 
-  // Agrupa os dados por status
+  // Group and count data by Status and Setor
   const statusGroups = _.groupBy(filteredData, 'Status');
   const statusCounts = _.mapValues(statusGroups, group => group.length);
-
-  // Agrupa os dados por setor
   const setorGroups = _.groupBy(filteredData, 'Setor');
   const setorCounts = _.mapValues(setorGroups, group => group.length);
 
@@ -60,7 +51,7 @@ const DataDisplay = ({ data, period }) => {
                   <TableBody>
                     {Object.entries(statusCounts).map(([status, count]) => (
                       <TableRow key={status}>
-                        <TableCell>{status}</TableCell>
+                        <TableCell>{status || "N/A"}</TableCell>
                         <TableCell>{count}</TableCell>
                       </TableRow>
                     ))}
@@ -84,7 +75,7 @@ const DataDisplay = ({ data, period }) => {
                   <TableBody>
                     {Object.entries(setorCounts).map(([setor, count]) => (
                       <TableRow key={setor}>
-                        <TableCell>{setor}</TableCell>
+                        <TableCell>{setor || "N/A"}</TableCell>
                         <TableCell>{count}</TableCell>
                       </TableRow>
                     ))}
@@ -118,10 +109,10 @@ const DataDisplay = ({ data, period }) => {
                   <TableRow key={index}>
                     <TableCell>{item.Nome}</TableCell>
                     <TableCell>{item.Setor}</TableCell>
-                    <TableCell>{item.Status}</TableCell>
-                    <TableCell>{item.Data_Entrada}</TableCell>
-                    <TableCell>{item.Data_Saida}</TableCell>
-                    <TableCell>{item.Hospital}</TableCell>
+                    <TableCell>{item.Status || "N/A"}</TableCell>
+                    <TableCell>{parseDate(item.Data_Entrada)}</TableCell>
+                    <TableCell>{parseDate(item.Data_Saida)}</TableCell>
+                    <TableCell>{item.Hospital || "N/A"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
